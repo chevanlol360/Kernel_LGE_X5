@@ -1,0 +1,115 @@
+/*
+ * Copyright (c) 2013, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&cci {
+	actuator0: qcom,actuator@18 {
+		cell-index = <0>;	//Use Af_main_0 of dw9716 with HI543
+		reg = <0x18 0x0>;
+		compatible = "qcom,actuator";
+		qcom,cci-master = <0>;
+	};
+
+	led_flash0: qcom,camera-led-flash {
+		cell-index = <0>;
+		compatible = "qcom,camera-led-flash";
+		qcom,flash-type = <1>;
+		qcom,flash-source = <&pm8226_flash0>;
+                qcom,torch-source = <&pm8226_torch>;
+	};
+
+	eeprom0: qcom,eeprom@28 { //EEPROM READ
+		cell-index = <1>;
+		reg = <0x28 0x0>;
+		qcom,eeprom-name = "hi543_eeprom";
+		compatible = "qcom,eeprom";
+		qcom,slave-addr = <0x28>;
+		qcom,cci-master = <0>;
+
+	};
+
+	/* Rev 0 */
+	qcom,camera@40 {
+		compatible = "qcom,hi543";
+		reg = <0x40 0x0>;
+		qcom,slave-id = <0x40 0x0 0x1F3C>;
+		qcom,csiphy-sd-index = <0>;
+		qcom,csid-sd-index = <0>;
+		qcom,actuator-src = <&actuator0>;
+		qcom,led-flash-src = <&led_flash0>;
+		//qcom,eeprom-src = <&eeprom0>;
+		qcom,mount-angle = <90>;
+		qcom,sensor-name = "hi543";
+		qcom,gpio-no-mux = <0>;
+		gpios = <&msmgpio 26 0>,		//MAIN_CAM_MCLK
+			<&msmgpio 114 0>, 		//MAIN_RESET_N
+			<&msmgpio 113 0>,		//MAIN_CAM_VIO
+			<&msmgpio 110 0>,		//MAIN_CAM_DVDD
+			<&msmgpio 62 0>,		//MAIN_CAM_AVDD
+			<&msmgpio 0 0>;			//MAIN_CAM_VCM
+		qcom,gpio-reset = <1>;
+		qcom,gpio-vio = <2>;
+		qcom,gpio-vdig = <3>;
+		qcom,gpio-vana = <4>;
+		qcom,gpio-vaf = <5>;
+		qcom,gpio-req-tbl-num = <0 1 2 3 4 5>;
+		qcom,gpio-req-tbl-flags = <1 0 0 0 0 0>;
+		qcom,gpio-req-tbl-label = "CAM0_MCLK", "CAM0_RESET", "MAIN_CAM_VIO", "MAIN_CAM_DVDD", "MAIN_CAM_AVDD", "MAIN_CAM_VCM";
+		qcom,csi-lane-assign = <0x4320>;
+		qcom,csi-lane-mask = <0x07>;
+		qcom,sensor-position = <0>;
+		qcom,sensor-mode = <0>;
+		qcom,cci-master = <0>;
+		status = "okay";
+	};
+	
+	qcom,camera@90 {
+		compatible = "qcom,mt9m114";
+		reg = <0x90 0x0>;
+		qcom,slave-id = <0x90 0x0 0x2481>;
+		qcom,csiphy-sd-index = <1>;
+		qcom,csid-sd-index = <1>;
+		qcom,mount-angle = <270>;
+		qcom,sensor-name = "mt9m114";
+		//cam_vdig-supply = <&pm8226_l5>;
+		cam_vana-supply = <&pm8226_l15>;   
+		cam_vio-supply = <&pm8226_l22>;
+		//qcom,cam-vreg-name = "cam_vio", "cam_vana";
+		//qcom,cam-vreg-type = <1 0>;
+		//qcom,cam-vreg-min-voltage = <0 2800000>;   //2850000
+		//qcom,cam-vreg-max-voltage = <0 2800000>;	//2850000
+		//qcom,cam-vreg-op-mode = <0 80000>;
+		qcom,cam-vreg-name = "cam_vdig", "cam_vio", "cam_vana";		
+		qcom,cam-vreg-type = <0 0 0>;		
+		qcom,cam-vreg-min-voltage = <0 1800000 2850000>;		
+		qcom,cam-vreg-max-voltage = <0 1800000 2850000>;		
+		qcom,cam-vreg-op-mode = <0 1800000 2850000>;
+		qcom,gpio-no-mux = <0>;
+		gpios = <&msmgpio 27 0>,			//VT_CAM_MCLK   
+				<&msmgpio 28 0>,			//VT_CAM_RESET   
+				<&msmgpio 31 0>;		    //VT_LDO_EN
+		qcom,gpio-reset = <1>;
+		qcom,gpio-vdig = <2>;
+		qcom,gpio-req-tbl-num = <0 1 2>;
+		qcom,gpio-req-tbl-flags = <1 0 0>;
+		qcom,gpio-req-tbl-label = "VT_CAM_MCLK",
+				"CAM_RESET",
+				"VT_LDO_EN";
+		qcom,csi-lane-assign = <0x4320>;
+		qcom,csi-lane-mask = <0x3>;
+		qcom,sensor-position = <1>;
+		qcom,sensor-mode = <1>;
+		qcom,cci-master = <1>;
+		status = "okay";
+	};
+
+};
