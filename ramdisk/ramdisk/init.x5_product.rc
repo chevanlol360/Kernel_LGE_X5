@@ -1,0 +1,52 @@
+on init
+# LGE_UPDATE_START, 2013/10/1, for carrier partition of Sprint based operators, p1-fs@lge.com
+    wait /dev/block/platform/msm_sdcc.1/by-name/carrier
+    exec /sbin/setup_fs_static /dev/block/platform/msm_sdcc.1/by-name/carrier no_reboot
+# LGE_UPDATE_END, 2013/10/1, for carrier partition of Sprint based operators, p1-fs@lge.com
+
+    mkdir /mpt 0775 system system
+    wait /dev/block/platform/msm_sdcc.1/by-name/mpt
+    exec /sbin/setup_fs_static /dev/block/platform/msm_sdcc.1/by-name/mpt no_reboot
+
+on fs
+# LGE_UPDATE_START, 2013/10/1, for carrier partition of Sprint based operators, p1-fs@lge.com
+    mkdir /carrier 0771 system lg_fota
+    wait /dev/block/platform/msm_sdcc.1/by-name/carrier
+    exec /system/bin/e2fsck -p /dev/block/platform/msm_sdcc.1/by-name/carrier
+    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/carrier /carrier nodev barrier=1 noauto_da_alloc
+# LGE_UPDATE_END, 2013/10/1, for carrier partition of Sprint based operators, p1-fs@lge.com
+
+    wait /dev/block/platform/msm_sdcc.1/by-name/mpt
+    exec /system/bin/e2fsck -p /dev/block/platform/msm_sdcc.1/by-name/mpt no_reboot
+    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/mpt /mpt nodev barrier=1 noauto_da_alloc
+
+on post-fs-data
+    mkdir /data/tombstones 0771 system system
+    mkdir /tombstones/modem 0771 system system
+
+# LGE_UPDATE_START, 2013/10/1, for carrier partition of Sprint based operators, p1-fs@lge.com
+    chown system lg_fota /carrier
+    chmod 771 /carrier
+# LGE_UPDATE_END, 2013/10/1, for carrier partition of Sprint based operators, p1-fs@lge.com
+
+# 2013-07-02 byungsung.cho@lge.com  LGP_DATA_APN_AVOID_APN_DB_ERASING_ON_FACTORY_DATA_RESET_AND_HFA_SPRINT [START]
+    mkdir /persist-lg/LGE_RC 0770 system system\
+    chown system system /persist-lg/LGE_RC
+    chmod 0770 /persist-lg/LGE_RC
+# 2013-07-02 byungsung.cho@lge.com  LGP_DATA_APN_AVOID_APN_DB_ERASING_ON_FACTORY_DATA_RESET_AND_HFA_SPRINT [END]
+
+    chown system system /mpt
+    chmod 0775 /mpt
+
+# ITSON_PATCHES
+    start itsonbs
+
+on boot
+
+#SELinux, partition labeling, security-selinux-task@lge.com
+    restorecon /carrier
+
+# ITSON_PATCHES
+service itsonbs /system/vendor/itson/itson-bootstrapper.sh
+    oneshot
+    critical
