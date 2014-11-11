@@ -22,6 +22,7 @@
 #include <linux/input/mt.h>
 #include <linux/sysdev.h>
 #include <linux/firmware.h>
+#include <mach/board_lge.h>
 
 #define LGE_TOUCH_NAME			"lge_touch"
 #define MXT_DEVICE_NAME		"touch_dev"
@@ -52,6 +53,9 @@
 
 /* Configuration file */
 #define MXT_CFG_MAGIC		"OBP_RAW V1"
+#define MXT_FIRMWARE_V204_CRC	0xBE0AE0
+#define MXT_DEFAULT_SCALING_FACTOR	16
+#define MXT_FW204_SCALING_FACTOR	8
 
 /* Registers */
 #define MXT_OBJECT_NUM_MAX	200
@@ -712,6 +716,7 @@ struct mxt_data {
 	bool t72_noise_state;
 	u8 cal_cnt;
 	struct hw_reset_data reset;
+	enum lge_boot_mode_type boot_mode;
 };
 
 struct tci_abs {
@@ -733,5 +738,6 @@ struct mxt_object *mxt_get_object(struct mxt_data *data, u8 type);
 int mxt_read_object(struct mxt_data *data, u8 type, u8 offset, u8 *val);
 int mxt_update_firmware(struct mxt_data *data, const char *fwname);
 int mxt_get_reference_chk(struct mxt_data *data);
+int mxt_scaling_factor_chk(struct mxt_data *data);
 
 #endif /* __LINUX_ATMEL_MXT_TS_H__ */

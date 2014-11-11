@@ -369,7 +369,7 @@
 			atmel,butt_check_enable = <0>;
 			atmel,ghost_detection_enable = <0>;
 			atmel,ghost_detection_value = <10 10 100 25 250 10 0>;
-			atmel,error_check_count = <1 3 3 5 10>;
+			atmel,error_check_count = <1 3 3 5 7>;
 		};
 
 		lge_touch@48 {
