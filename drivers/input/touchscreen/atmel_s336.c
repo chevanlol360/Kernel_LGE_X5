@@ -52,7 +52,7 @@ static struct workqueue_struct	*touch_wq = NULL;
 
 static bool touch_irq_mask = 1;
 static bool touch_irq_wake_mask = 0;
-static unsigned char touched_finger_count = 0;
+unsigned char touched_finger_count = 0;
 static unsigned char patchevent_mask = 0;
 static unsigned char power_block_mask = 0;
 
@@ -920,8 +920,10 @@ static int mxt_get_cap_diff(struct mxt_data *data)
 	u8 ref_new_chk = 0;
 	u16 diff_butt_ref[4] = {0};
 	struct mxt_object *object = NULL;
+	u8 scaling_value = MXT_DEFAULT_SCALING_FACTOR;
 
 	object = mxt_get_object(data, MXT_SPT_DYNAMICCONFIGURATIONCONTAINER_T71);
+	data->ref_limit.diff_scaling = scaling_value;
 
 	/* Get config CRC from device */
 
@@ -965,6 +967,13 @@ static int mxt_get_cap_diff(struct mxt_data *data)
 		for( y = data->channel_size.start_y ; y < data->channel_size.start_y + data->channel_size.size_y; y++) {
 			ret = mxt_write_mem(data, object->start_address + 60 + y, 1, (u8*)&cap_diff[y]);
 		}
+	}
+	/* Scaling Factor save to ic */
+	ret = mxt_write_mem(data, object->start_address + 106, 1, &scaling_value);
+	if (ret) {
+		TOUCH_INFO_MSG("scaling_value write fail \n");
+	} else {
+		TOUCH_INFO_MSG("scaling_value write %d \n", scaling_value);
 	}
 
 	/* Key Button write to device */
@@ -1434,7 +1443,13 @@ int mxt_get_reference_chk(struct mxt_data *data)
 	}
 
 	if (!half_err_cnt)
-		half_err_cnt = 10;
+		half_err_cnt = 7;
+	if (data->boot_mode != LGE_BOOT_MODE_NORMAL) {
+		half_err_cnt = 1;
+	}
+	if (data->pdata->diff_scaling == 8 && half_err_cnt == 1) {
+		half_err_cnt = 3;
+	}
 
 	end_page = (data->info->matrix_xsize * data->info->matrix_ysize) / NODE_PER_PAGE;
 	for (read_page = 0 ; read_page < end_page; read_page++) {
@@ -4231,6 +4246,9 @@ static ssize_t mxt_run_self_diagnostic_show(struct mxt_data *data, char *buf)
 		return len;
 	}
 
+	mxt_t6_command(data, MXT_COMMAND_CALIBRATE, 1, false);
+	msleep(30);
+
 	ref_buf = kzalloc(PAGE_SIZE, GFP_KERNEL);
 	if (!ref_buf) {
 		TOUCH_INFO_MSG("%s Failed to allocate memory\n", __func__);
@@ -4276,6 +4294,11 @@ static ssize_t mxt_run_self_diagnostic_show(struct mxt_data *data, char *buf)
 
 	snprintf(temp_buf, PAGE_SIZE, "Cap Diff : %s\n", global_mxt_data->bad_sample == 0 ? "Pass" : "Fail");
 	write_file(SELF_DIAGNOSTIC_FILE_PATH, temp_buf, 0);
+
+	error = mxt_scaling_factor_chk(data);
+	if (error) {
+		TOUCH_INFO_MSG("%s Failed to mxt_scailing_factor_chk\n", __func__);
+	}
 
 	if (global_mxt_data) {
 		error = __mxt_read_reg(global_mxt_data->client, global_mxt_data->T71_address + 51, 26, &global_mxt_data->ref_limit);
@@ -4550,8 +4573,6 @@ static void lpwg_late_resume(struct mxt_data *data)
 {
 	TOUCH_INFO_MSG("%s Start\n", __func__);
 
-	memset(g_tci_press, 0, sizeof(g_tci_press));
-	memset(g_tci_report, 0, sizeof(g_tci_report));
 	TOUCH_INFO_MSG("%s End\n", __func__);
 }
 
@@ -4623,7 +4644,8 @@ err_t atmel_ts_lpwg(struct i2c_client* client, u32 code, u32 value, struct point
 		if (value == 0 && data->mxt_multi_tap_enable) {	/* password fail */
 			TOUCH_INFO_MSG("Screen on fail\n");
 			mxt_set_t7_power_cfg(data, MXT_POWER_CFG_RUN);
-			mxt_gesture_mode_start(data);
+			if (data->pdata->panel_on == POWER_OFF)
+				mxt_gesture_mode_start(data);
 		}
 		//wake_unlock(&touch_wake_lock);	/* knock on, password wake unlock */
 		break;
@@ -4669,6 +4691,10 @@ static ssize_t show_lpwg_data(struct mxt_data *data, char *buf)
 			break;
 		ret += sprintf(buf+ret, "%d %d\n", lpwg_data[i].x, lpwg_data[i].y);
 	}
+
+	memset(g_tci_press, -1, sizeof(g_tci_press));
+	memset(g_tci_report, -1, sizeof(g_tci_report));
+
 	return ret;
 }
 
@@ -4848,7 +4874,7 @@ static LGE_TOUCH_ATTR(update_fw, S_IWUSR, NULL, mxt_update_fw_store);
 static LGE_TOUCH_ATTR(power_control, S_IRUGO | S_IWUSR, mxt_power_control_show, mxt_power_control_store);
 static LGE_TOUCH_ATTR(ghost_detection_enable, S_IWUSR, NULL, mxt_ghost_detection_enable_store);
 static LGE_TOUCH_ATTR(global_access_pixel, S_IWUSR | S_IRUSR, mxt_global_access_pixel_show, mxt_global_access_pixel_store);
-static LGE_TOUCH_ATTR(rebase, S_IWUSR | S_IRUSR, mxt_force_rebase_show, NULL);
+static LGE_TOUCH_ATTR(rebase, S_IRUGO, mxt_force_rebase_show, NULL);
 static LGE_TOUCH_ATTR(mfts, S_IWUSR | S_IRUSR, mxt_mfts_enable_show, mxt_mfts_enable_store);
 static LGE_TOUCH_ATTR(incoming_call, S_IRUGO | S_IWUSR, NULL, store_incoming_call);
 static LGE_TOUCH_ATTR(lockscreen, S_IRUGO | S_IWUSR, show_lockscreen, store_lockscreen);
@@ -4949,6 +4975,7 @@ static void mxt_reset_slots(struct mxt_data *data)
 	mxt_input_sync(input_dev);
 	TOUCH_INFO_MSG("Release all event \n");
 
+	memset(data->fingers, 0x0, sizeof(struct mxt_finger) * MXT_MAX_FINGER);
 	memset(data->ts_data.prev_data, 0x0, sizeof(data->ts_data.prev_data));
 	touched_finger_count = 0;
 	data->button_lock = false;
@@ -5223,7 +5250,7 @@ static int mxt_parse_dt(struct device *dev, struct mxt_platform_data *pdata)
 	rc = of_property_read_u32(node, "atmel,diff_scaling", &temp_val);
 	if (rc && (rc != -EINVAL)) {
 		TOUCH_INFO_MSG( "DT : Unable to read diff_scaling\n");
-		pdata->diff_scaling = 16;
+		pdata->diff_scaling = MXT_DEFAULT_SCALING_FACTOR;
 	} else {
 		pdata->diff_scaling = temp_val;
 	}
@@ -6023,6 +6050,7 @@ static int mxt_write_config(struct mxt_fw_info *fw_info)
 	u8 i = 0, val = 0;
 	u16 reg = 0, index = 0;
 	int ret = 0;
+	u8 prev_scaling_chk = 0;
 
 	TOUCH_INFO_MSG("%s \n", __func__);
 
@@ -6053,6 +6081,14 @@ static int mxt_write_config(struct mxt_fw_info *fw_info)
 	ret = mxt_read_mem(data, object->start_address + 107, 5, buf_crc_t71);
 	if (ret) {
 		TOUCH_INFO_MSG("T71 CRC read fail \n");
+	}
+
+	/* Read scaling factor */
+	ret = mxt_read_mem(data, object->start_address + 106, 1, &prev_scaling_chk);
+	if (ret) {
+		TOUCH_INFO_MSG("T71 CRC read fail \n");
+	} else {
+		TOUCH_INFO_MSG("T71 Scaling Factor [%d] \n", prev_scaling_chk);
 	}
 
 	t71_cfg_crc = buf_crc_t71[3] << 16 | buf_crc_t71[2] << 8 | buf_crc_t71[1];
@@ -6168,6 +6204,14 @@ static int mxt_write_config(struct mxt_fw_info *fw_info)
 		buf_crc_t71[2] = (u8)((fw_info->cfg_crc & 0x0000FF00) >> 8);
 		buf_crc_t71[3] = (u8)((fw_info->cfg_crc & 0x00FF0000) >> 16);
 		buf_crc_t71[4] = (u8)((fw_info->cfg_crc & 0xFF000000) >> 24);
+
+		ret = mxt_write_mem(data, object->start_address + 106, 1, &prev_scaling_chk);
+		if (ret) {
+			TOUCH_INFO_MSG("Scaling Factor Restore fail\n");
+			return ret;
+		} else {
+			TOUCH_INFO_MSG("Scaling Factor Restore [%d] \n", prev_scaling_chk);
+		}
 
 		ret = mxt_write_mem(data, object->start_address + 107, 5, buf_crc_t71);
 		if (ret) {
@@ -6303,6 +6347,70 @@ int mxt_update_firmware(struct mxt_data *data, const char *fwname)
 
 }
 
+int mxt_scaling_factor_chk(struct mxt_data *data)
+{
+	u8 prev_scaling_chk = 0;
+	struct mxt_object *object = NULL;
+	u8 t71_crc_buf[4];
+	u32 t71_cfg_crc = 0;
+	int ret = 0;
+
+	TOUCH_INFO_MSG("=====================================\n");
+
+	ret = mxt_table_initialize(data);
+	if (ret) {
+		TOUCH_INFO_MSG("%s Failed to initialize\n", __func__);
+		return 1;
+	}
+
+	object = mxt_get_object(data, MXT_SPT_DYNAMICCONFIGURATIONCONTAINER_T71);
+	if (!object) {
+		TOUCH_INFO_MSG("%s error mxt_get_object \n", __func__);
+		return 1;
+	}
+
+	ret = mxt_read_mem(data, object->start_address + 108, 4, &t71_crc_buf);
+	t71_cfg_crc = t71_crc_buf[2] << 16 | t71_crc_buf[1] << 8 | t71_crc_buf[0];
+	TOUCH_INFO_MSG("T71 CRC [%06X] \n", t71_cfg_crc);
+	if (ret) {
+		TOUCH_INFO_MSG("T71 CRC read fail \n");
+		return 1;
+	}
+
+	/*read scaling factor from IC*/
+	ret = mxt_read_mem(data, object->start_address + 106, 1, &prev_scaling_chk);
+	TOUCH_INFO_MSG("Read T71 Scaling Factor [%d] \n", prev_scaling_chk);
+	if (ret) {
+		TOUCH_INFO_MSG("T71 Scaling Factor read fail \n");
+		return 1;
+	}
+
+	if (prev_scaling_chk != 0) {
+		TOUCH_INFO_MSG("Update T71 Diff Scaling Factor [%d]\n", prev_scaling_chk);
+		data->pdata->diff_scaling = prev_scaling_chk;
+		if (data->pdata->diff_scaling == 8)
+			data->pdata->error_check_count[0] = data->pdata->error_check_count[1];
+	}
+
+	if (t71_cfg_crc == MXT_FIRMWARE_V204_CRC) {
+		TOUCH_INFO_MSG("T71 FW204 found \n");
+		if (prev_scaling_chk == 0 && prev_scaling_chk != MXT_DEFAULT_SCALING_FACTOR) {
+			prev_scaling_chk = MXT_FW204_SCALING_FACTOR;
+			ret = mxt_write_mem(data, object->start_address + 106, 1, &prev_scaling_chk);
+			if (ret) {
+				TOUCH_INFO_MSG("T71 Scaling Factor write fail \n");
+				return 1;
+			}
+			TOUCH_INFO_MSG("T71 Scaling Factor write [%d]\n", prev_scaling_chk);
+			data->pdata->diff_scaling = prev_scaling_chk;
+		}
+	}
+	TOUCH_INFO_MSG("=====================================\n");
+
+	return 0;
+
+}
+
 static int __devinit mxt_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
 	struct mxt_data *data = NULL;
@@ -6328,6 +6436,12 @@ static int __devinit mxt_probe(struct i2c_client *client, const struct i2c_devic
 	}
 
 	data->ref_chk = 1;
+	data->boot_mode = lge_get_boot_mode();
+	if (data->boot_mode == LGE_BOOT_MODE_NORMAL) {
+		TOUCH_INFO_MSG("Boot mode is Normal\n");
+	} else {
+		TOUCH_INFO_MSG("Boot mode is not Normal\n");
+	}
 
 	snprintf(data->phys, sizeof(data->phys), "i2c-%u-%04x/input0", client->adapter->nr, client->addr);
 	TOUCH_INFO_MSG("i2c-%u-%04x/input0\n", client->adapter->nr, client->addr);
@@ -6403,6 +6517,11 @@ static int __devinit mxt_probe(struct i2c_client *client, const struct i2c_devic
 	if (!data->object_table) {
 		TOUCH_INFO_MSG("%s Failed to allocate memory\n", __func__);
 		goto err_free_pdata;
+	}
+
+	error = mxt_scaling_factor_chk(data);
+	if (error) {
+		TOUCH_INFO_MSG("%s Failed to mxt_scailing_factor_chk\n", __func__);
 	}
 
 	if (data->pdata->fw_name) {
