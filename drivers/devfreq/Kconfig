@@ -86,4 +86,13 @@ config ARM_EXYNOS4_BUS_DEVFREQ
 	  To operate with optimal voltages, ASV support is required
 	  (CONFIG_EXYNOS_ASV).
 
+#####################Zippy ADDITIONS#####################
+config SIMPLE_GPU_ALGORITHM
+	bool "Simple GPU algorithm"
+	depends on DEVFREQ_GOV_MSM_ADRENO_TZ
+	help
+	  Simple user configurable GPU controlling algorithm
+
+
+
 endif # PM_DEVFREQ
