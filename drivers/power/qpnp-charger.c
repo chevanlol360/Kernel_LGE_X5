@@ -908,7 +908,7 @@ qpnp_chg_is_usb_chg_plugged_in(struct qpnp_chg_chip *chip)
 
 	return (usbin_valid_rt_sts & USB_VALID_BIT) ? 1 : 0;
 }
-#ifdef CONFIG_LGE_PM_VZW_LLK
+#ifdef CONFIG_LGE_PM
 bool external_qpnp_chg_is_usb_chg_plugged_in(void)
 {
 	return qpnp_chg_is_usb_chg_plugged_in(qpnp_chg);

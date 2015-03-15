@@ -51,6 +51,7 @@
 			atmel,panel_check = <0>;
 			atmel,ghost_detection_enable = <1>;
 			atmel,butt_check_enable = <1>;
+			atmel,panel_delta_value = <0 0 230>;
 		};
 
 		lge_ts_misc {

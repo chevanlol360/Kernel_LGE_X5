@@ -437,6 +437,9 @@ void lge_pm_set_usb_cable_to_minimum(void){
 
 
 #ifdef CONFIG_LGE_PM_BATTERY_ID_CHECKER
+#ifdef CONFIG_LGE_PM
+extern int external_qpnp_chg_is_usb_chg_plugged_in(void);
+#endif
 
 #if defined(CONFIG_MACH_MSM8926_X5_VZW) || defined(CONFIG_MACH_MSM8926_X3C_TRF_US) || \
 	defined(CONFIG_MACH_MSM8926_X3N_OPEN_EU) || defined(CONFIG_MACH_MSM8926_X3N_GLOBAL_COM) || defined(CONFIG_MACH_MSM8926_X3N_GLOBAL_SCA) || \
@@ -455,10 +458,18 @@ bool is_lge_battery_valid(void)
 #ifdef CONFIG_LGE_PM_BATTERY_4_2VOLT
 	return true;
 #else
+
+#ifdef CONFIG_LGE_PM
+	if( (lge_pm_get_cable_type()== CABLE_56K ||
+		lge_pm_get_cable_type()== CABLE_130K ||
+		lge_pm_get_cable_type()== CABLE_910K) && (external_qpnp_chg_is_usb_chg_plugged_in()) )
+		return true;
+#else
 	if(lge_pm_get_cable_type()== CABLE_56K ||
 		lge_pm_get_cable_type()== CABLE_130K ||
 		lge_pm_get_cable_type()== CABLE_910K)
 		return true;
+#endif
 		
 	if (lge_battery_info == BATT_ID_DS2704_N ||
 		lge_battery_info == BATT_ID_DS2704_L ||

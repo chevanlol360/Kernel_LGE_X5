@@ -356,7 +356,9 @@
 			atmel,knock_on_type = <1>;
 			atmel,auto_fw_update = <1>;
 			atmel,fw_name = "atmel/xxx.fw";
+			atmel,maker_id = <0>;
 			atmel,panel_check = <0>;
+			atmel,panel_delta_value = <0 0 0>;
 			atmel,t15_extra_key_state = <0 0>;
 			atmel,extra_fw_name = "atmel/xxx.fw";
 			atmel,global_access_pixel = <5>;
@@ -370,6 +372,45 @@
 			atmel,ghost_detection_enable = <0>;
 			atmel,ghost_detection_value = <10 10 100 25 250 10 0>;
 			atmel,error_check_count = <1 3 3 5 7>;
+<<<<<<< HEAD
+=======
+		};
+
+		atmel_s336_rev_b@4a {
+			compatible = "atmel,s336";
+			status = "disable";
+			reg = <0x4a>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <17 0x0>;
+			vdd_ana-supply = <&pm8226_l28>;
+			vcc_i2c-supply = <0>;
+			vcc_dig-supply = <0>;
+			atmel,reset-gpio = <&msmgpio 60 0x00>;
+			atmel,irq-gpio = <&msmgpio 17 0x00>;
+			atmel,numtouch = <8>;
+			atmel,t15_key_state = <1 2>;
+			atmel,t15_key_map = <158 139>;
+			atmel,accuracy_filter_enable = <0>;
+			atmel,knock_on_type = <1>;
+			atmel,auto_fw_update = <1>;
+			atmel,fw_name = "atmel/xxx.fw";
+			atmel,maker_id = <0>;
+			atmel,panel_check = <0>;
+			atmel,panel_delta_value = <0 0 0>;
+			atmel,t15_extra_key_state = <0 0>;
+			atmel,extra_fw_name = "atmel/xxx.fw";
+			atmel,global_access_pixel = <5>;
+			atmel,use_mfts = <0>; // Enable for CoF type only
+			atmel,lcd_x = <540>;
+			atmel,lcd_y = <960>;
+			atmel,time_reset_threshold = <5>;
+			atmel,time_reset_error_node_chk = <5>;
+			atmel,diff_scaling = <16>;
+			atmel,butt_check_enable = <0>;
+			atmel,ghost_detection_enable = <0>;
+			atmel,ghost_detection_value = <10 10 100 25 250 10 0>;
+			atmel,error_check_count = <1 3 3 5 7>;
+>>>>>>> ZV3_KK
 		};
 
 		lge_touch@48 {

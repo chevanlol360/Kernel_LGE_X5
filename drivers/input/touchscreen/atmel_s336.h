@@ -257,6 +257,8 @@
 #define SELF_DIAGNOSTIC_STATUS_COMPLETE	0
 #define SELF_DIAGNOSTIC_STATUS_RUNNING	1
 
+#define DIVERSIFY_FW_NUM	4
+
 /* MXT_GEN_POWER_T7 field */
 struct t7_config {
 	u8 idle;
@@ -275,13 +277,19 @@ enum {
 	POWER_WAKE
 };
 
-
+enum {
+	ELK_PANEL = 0,
+	LGIT_PANEL,
+	SUNTEL_PANEL,
+	MAX_PANEL,
+};
 enum{
 	TIME_EX_INIT_TIME,
 	TIME_EX_FIRST_INT_TIME,
 	TIME_EX_T72_NOISE_INT_TIME,
 	TIME_EX_CURR_INT_TIME,
 	TIME_EX_GHOST_INT_TIME,
+	TIME_EX_KNOCK_INT_TIME,
 	TIME_EX_PROFILE_MAX,
 };
 
@@ -365,9 +373,14 @@ struct mxt_platform_data {
 	unsigned long gpio_reset;
 	unsigned long gpio_int;
 	unsigned int panel_check;
+	unsigned int panel_delta_value[MAX_PANEL];
 	unsigned char panel_on;
-	const char *fw_name;
+	const char *fw_name[DIVERSIFY_FW_NUM];
 	const char *extra_fw_name;
+	u8 panel_id;
+	u8 maker_id;
+	u8 maker_id_gpio;
+	u8 maker_id2_gpio;
 	unsigned char auto_fw_update;
 	char knock_on_type;
 	unsigned int lcd_x;
@@ -717,6 +730,10 @@ struct mxt_data {
 	u8 cal_cnt;
 	struct hw_reset_data reset;
 	enum lge_boot_mode_type boot_mode;
+<<<<<<< HEAD
+=======
+	int panel_offset_value;
+>>>>>>> ZV3_KK
 };
 
 struct tci_abs {
