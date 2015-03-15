@@ -666,12 +666,6 @@
 		CF 00 00 03
 		39 01 00 00 28 00 05 /* boosting11 */
 		B0 00 01 7C 0E
-		39 01 00 00 64 00 05 /* display on */
-		B0 00 01 7C 0F
-		05 01 00 00 14 00 01 /* CABC Sleep Out */
-		11
-		05 01 00 00 00 00 01 /* CABC Display On */
-		29
 		15 01 00 00 05 00 02 /* CABC WRDISBV */
 		51 FF
 		39 01 00 00 05 00 09 /* SET CABC */
@@ -679,7 +673,13 @@
 		15 01 00 00 05 00 02 /* CABC WRCABC */
 		55 01
 		15 01 00 00 00 00 02 /* WRCTRLD */
-		53 24];
+		53 24
+		39 01 00 00 64 00 05 /* display on */
+		B0 00 01 7C 0F
+		05 01 00 00 78 00 01 /* CABC Sleep Out */
+		11
+		05 01 00 00 00 00 01 /* CABC Display On */
+		29];
 		qcom,mdss-dsi-off-command = [
 		39 01 00 00 00 00 05 /* display off */
 		B0 00 01 7C 0E];
