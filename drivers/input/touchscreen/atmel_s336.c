@@ -6544,8 +6544,6 @@ int mxt_scaling_factor_chk(struct mxt_data *data)
 
 }
 
-<<<<<<< HEAD
-=======
 static int mxt_get_panel_id(struct mxt_data *data){
 	int panel_id = 0xFF;
 	int ret = 0;
@@ -6600,7 +6598,6 @@ exit :
 	return 0xFF;
 }
 
->>>>>>> ZV3_KK
 static int __devinit mxt_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
 	struct mxt_data *data = NULL;
@@ -6715,10 +6712,6 @@ static int __devinit mxt_probe(struct i2c_client *client, const struct i2c_devic
 		TOUCH_INFO_MSG("%s Failed to mxt_scailing_factor_chk\n", __func__);
 	}
 
-<<<<<<< HEAD
-	if (data->pdata->fw_name) {
-		error = mxt_update_firmware(data, data->pdata->fw_name);
-=======
 	if (data->pdata->maker_id) {
 		panel_id = mxt_get_panel_id(data);
 		if (panel_id == 0xFF) {
@@ -6742,7 +6735,6 @@ static int __devinit mxt_probe(struct i2c_client *client, const struct i2c_devic
 
 	if (data->pdata->fw_name[panel_id]) {
 		error = mxt_update_firmware(data, data->pdata->fw_name[panel_id]);
->>>>>>> ZV3_KK
 		if (error) {
 			TOUCH_INFO_MSG("Failed to request firmware\n");
 			goto err_free_irq;

@@ -730,10 +730,7 @@ struct mxt_data {
 	u8 cal_cnt;
 	struct hw_reset_data reset;
 	enum lge_boot_mode_type boot_mode;
-<<<<<<< HEAD
-=======
 	int panel_offset_value;
->>>>>>> ZV3_KK
 };
 
 struct tci_abs {

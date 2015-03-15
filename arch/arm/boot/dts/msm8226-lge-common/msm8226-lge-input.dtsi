@@ -372,8 +372,6 @@
 			atmel,ghost_detection_enable = <0>;
 			atmel,ghost_detection_value = <10 10 100 25 250 10 0>;
 			atmel,error_check_count = <1 3 3 5 7>;
-<<<<<<< HEAD
-=======
 		};
 
 		atmel_s336_rev_b@4a {
@@ -410,7 +408,6 @@
 			atmel,ghost_detection_enable = <0>;
 			atmel,ghost_detection_value = <10 10 100 25 250 10 0>;
 			atmel,error_check_count = <1 3 3 5 7>;
->>>>>>> ZV3_KK
 		};
 
 		lge_touch@48 {
